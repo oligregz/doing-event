@@ -1,0 +1,8 @@
+node_modules
+package-lock.json
+api/node_modules
+api/dist
+api/package-lock.json
+interface/node_modules
+interface/dist
+interface/package-lock.json
