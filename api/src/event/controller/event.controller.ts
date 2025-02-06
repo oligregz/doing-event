@@ -8,7 +8,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { EventDTO } from '../dto/EventDTO';
-import { EventService } from '../event/event.service';
+import { EventService } from '../service/event.service';
 import { UpdatedEventDTO } from '../dto/UpdatedEventDTO';
 
 @Controller('event')
