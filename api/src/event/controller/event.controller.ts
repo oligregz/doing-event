@@ -6,11 +6,14 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { EventDTO } from '../dto/EventDTO';
 import { EventService } from '../service/event.service';
 import { UpdatedEventDTO } from '../dto/UpdatedEventDTO';
+import { AuthGuard } from 'src/auth/guard/auth.guard';
 
+@UseGuards(AuthGuard)
 @Controller('event')
 export class EventController {
   constructor(private readonly eventService: EventService) {}
