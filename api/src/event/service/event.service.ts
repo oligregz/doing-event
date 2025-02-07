@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { EventDTO } from '../dto/EventDTO';
 import { UpdatedEventDTO } from '../dto/UpdatedEventDTO';
+import { v4 as getUUID } from 'uuid';
 
 @Injectable()
 export class EventService {
@@ -19,6 +20,7 @@ export class EventService {
   create(event: EventDTO) {
     // checks if object already exists
     this.checksIfObjectAlreadyExists(event);
+    event.id = getUUID();
 
     // create object
     this.events.push(event);
