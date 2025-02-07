@@ -38,4 +38,8 @@ export class UsersService {
     this.users.push(user);
     return this.users;
   }
+
+  findByUsername(username: string): UserDTO | null {
+    return this.users[1];
+  }
 }
