@@ -19,8 +19,8 @@ export class AuthService {
     );
   }
 
-  signIn(username: string, password: string): AuthResponseDTO {
-    const user = this.usersService.findByUsername(username);
+  async signIn(username: string, password: string): Promise<AuthResponseDTO> {
+    const user = await this.usersService.findByUsername(username);
 
     if (!user || !compareSync(password, user.password))
       throw new UnauthorizedException();
