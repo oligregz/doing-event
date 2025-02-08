@@ -8,18 +8,6 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
-  private readonly users: UserDTO[] = [
-    {
-      id: '1',
-      name: 'userex',
-      rg: '1212332312',
-      cpf: '092365423',
-      cnpj: '98323y12b4874b',
-      dateOfBirth: new Date('2011-10-05T21:57:00.000Z'),
-      email: 'email.example@hotmail.com',
-      password: 'passs',
-    },
-  ];
 
   constructor(
     @InjectRepository(UserEntity)
