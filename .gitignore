@@ -7,3 +7,4 @@ api/.env
 interface/node_modules
 interface/dist
 interface/package-lock.json
+.env
