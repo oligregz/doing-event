@@ -23,5 +23,6 @@ export class UserEntity {
   @Column({type: 'varchar'})
   password: string;
 
-
+  @Column({type: 'timestamptz', name: 'date_of_birth'})
+  dateOfBirth: Date;
 }
