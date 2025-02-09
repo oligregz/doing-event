@@ -1,0 +1,29 @@
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  db-container-doing-event:
+    container_name: postgres-doing-event-api-db
+    image: postgres:latest
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=userroot
+      - POSTGRES_PASSWORD=Root5432
+      - POSTGRES_DB=doing-event-database
+      - PGUSER=userroot
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U userroot -d doing-event-database"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  postgres_data:
+    name: doing-event-postgres-data
+  interface_node_modules:

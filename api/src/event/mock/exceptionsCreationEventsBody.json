@@ -1,0 +1,42 @@
+[
+  {
+    "description": "event with the same timeRange as an existing event (conflict)",
+    "startDate": "2011-10-05T08:48:00.000Z",
+    "endDate": "2011-10-05T21:57:00.000Z"
+  },
+  {
+    "description": "event that starts inside the timeRange of another event (conflict)",
+    "startDate": "2011-10-05T10:00:00.000Z",
+    "endDate": "2011-10-05T12:00:00.000Z"
+  },
+  {
+    "description": "event that ends inside the timeRange of another event (conflict)",
+    "startDate": "2011-10-05T07:00:00.000Z",
+    "endDate": "2011-10-05T10:00:00.000Z"
+  },
+  {
+    "description": "event that completely overlaps another event (conflict)",
+    "startDate": "2011-10-05T07:00:00.000Z",
+    "endDate": "2011-10-05T23:00:00.000Z"
+  },
+  {
+    "description": "event with no timeRange conflict (success)",
+    "startDate": "2011-10-06T08:00:00.000Z",
+    "endDate": "2011-10-06T10:00:00.000Z"
+  },
+  {
+    "description": "event that starts exactly at the end of another event (no conflict)",
+    "startDate": "2011-10-05T21:57:00.000Z",
+    "endDate": "2011-10-05T23:00:00.000Z"
+  },
+  {
+    "description": "event that ends exactly at the start of another event (no conflict)",
+    "startDate": "2011-10-05T07:00:00.000Z",
+    "endDate": "2011-10-05T08:48:00.000Z"
+  },
+  {
+    "description": "event with startDate greater than endDate (validation error)",
+    "startDate": "2011-10-05T21:57:00.000Z",
+    "endDate": "2011-10-05T08:48:00.000Z"
+  }
+]
