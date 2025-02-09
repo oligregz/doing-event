@@ -19,27 +19,27 @@ export class EventController {
   constructor(private readonly eventService: EventService) {}
 
   @Post()
-  create(@Body() event: EventDTO) {
-    this.eventService.create(event);
+  async create(@Body() event: EventDTO) {
+    return await this.eventService.create(event);
   }
 
-  @Get()
-  list() {
-    console.log(this.eventService.list());
-  }
+  // @Get()
+  // async list() {
+  //   console.log(await this.eventService.list());
+  // }
 
-  @Get('/:id')
-  findById(@Param('id') id: string) {
-    this.eventService.findById(id);
-  }
+  // @Get('/:id')
+  // async findById(@Param('id') id: string) {
+  //   await this.eventService.findById(id);
+  // }
 
-  @Put()
-  update(@Body() updatedEventBody: UpdatedEventDTO) {
-    console.log(this.eventService.update(updatedEventBody));
-  }
+  // @Put()
+  // async update(@Body() updatedEventBody: UpdatedEventDTO) {
+  //   console.log(await this.eventService.update(updatedEventBody));
+  // }
 
-  @Delete('/:id')
-  deleteById(@Param('id') id: string) {
-    this.eventService.delete(id);
-  }
+  // @Delete('/:id')
+  // async deleteById(@Param('id') id: string) {
+  //   await this.eventService.delete(id);
+  // }
 }
