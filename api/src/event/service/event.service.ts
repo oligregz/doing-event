@@ -14,7 +14,6 @@ export class EventService {
   ) {}
 
   async create(event: EventDTO): Promise<EventDTO> {
-    // checks if the object already exists
     const eventExists = await this.existsObject(event);
 
     if (eventExists) {
@@ -27,7 +26,6 @@ export class EventService {
       );
     }
 
-    // checks if the time slot is available
     const isTimeRangeAvailable = await this.isTimeRangeAvailable(
       event.startDate,
       event.endDate
@@ -55,12 +53,89 @@ export class EventService {
     return savedEvent;
   }
 
+  async list(): Promise<EventDTO[]> {
+    return await this.eventRepository.find();
+  }
+
+  async findById(id: string): Promise<EventDTO> {
+    const event = await this.eventRepository.findOne({ where: { id } });
+
+    if (!event) {
+      throw new HttpException(
+        {
+          message: `Event with ID ${id} not found`,
+          statusCode: HttpStatus.NOT_FOUND,
+        },
+        HttpStatus.NOT_FOUND
+      );
+    }
+
+    return event;
+  }
+
+  async update(updatedEventBody: UpdatedEventDTO): Promise<EventDTO> {
+    const event = await this.eventRepository.findOne({
+      where: { id: updatedEventBody.id },
+    });
+
+    if (!event) {
+      throw new HttpException(
+        {
+          message: `Event with ID ${updatedEventBody.id} not found`,
+          statusCode: HttpStatus.NOT_FOUND,
+        },
+        HttpStatus.NOT_FOUND
+      );
+    }
+
+    const eventBodyKeys: string[] = ['description', 'startDate', 'endDate'];
+    for (let key of eventBodyKeys) {
+      if (updatedEventBody[key] !== undefined) {
+        event[key] = updatedEventBody[key];
+      }
+    }
+
+    const isTimeRangeAvailable = await this.isTimeRangeAvailable(
+      event.startDate,
+      event.endDate,
+      event.id
+    );
+
+    if (!isTimeRangeAvailable) {
+      throw new HttpException(
+        {
+          message: `The updated time range conflicts with another event`,
+          statusCode: HttpStatus.CONFLICT,
+        },
+        HttpStatus.CONFLICT
+      );
+    }
+
+    const updatedEvent = await this.eventRepository.save(event);
+
+    return updatedEvent;
+  }
+
+  async delete(id: string): Promise<void> {
+    const event = await this.eventRepository.findOne({ where: { id } });
+
+    if (!event) {
+      throw new HttpException(
+        {
+          message: `Event with ID ${id} not found`,
+          statusCode: HttpStatus.NOT_FOUND,
+        },
+        HttpStatus.NOT_FOUND
+      );
+    }
+
+    await this.eventRepository.remove(event);
+  }
+
   async existsObject(event: EventDTO): Promise<boolean> {
     const uniqueFields = ['id', 'description', 'startDate', 'endDate'];
-
     const whereConditions: Record<string, any> = {};
   
-    // create dinamic WHERE
     for (const field of uniqueFields) {
       if (event[field] !== undefined) {
         whereConditions[field] = event[field];
@@ -74,30 +149,21 @@ export class EventService {
     return !!eventExists;
   }
 
-  async isTimeRangeAvailable(startDate: Date, endDate: Date): Promise<boolean> {
+  async isTimeRangeAvailable(startDate: Date, endDate: Date, eventId?: string): Promise<boolean> {
+    const whereConditions = [
+      { startDate: startDate, endDate: endDate },
+      { startDate: Between(startDate, endDate) },
+      { endDate: Between(startDate, endDate) },
+      { startDate: LessThanOrEqual(startDate), endDate: MoreThanOrEqual(endDate) },
+    ];
+  
     const overlappingEvent = await this.eventRepository.findOne({
-      where: [
-        // case1: the new event has exactly the same timeRange as another event
-        {
-          startDate: startDate,
-          endDate: endDate,
-        },
-        // case2: the new event starts or ends inside another event
-        {
-          startDate: Between(startDate, endDate),
-        },
-        {
-          endDate: Between(startDate, endDate),
-        },
-        // case3: the new event starts or ends inside another event
-        {
-          startDate: LessThanOrEqual(startDate),
-          endDate: MoreThanOrEqual(endDate),
-        },
-      ],
+      where: eventId
+        ? whereConditions.map(condition => ({ ...condition, id: Not(eventId) }))
+        : whereConditions,
     });
-
+  
     return !overlappingEvent;
   }
+  
 }
-
