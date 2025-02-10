@@ -1,35 +1,62 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import "./styles/styles.css";
+import DiamondPNG from "./assets/diamond.png";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="container">
+      <div className="container-login">
+        <div className="wrap-login">
+          <form className="login-form">
+            <span className="login-form-title">Welcome</span>
+
+            <span className="login-form-title">
+              <img src={DiamondPNG} />
+            </span>
+
+            <div className="wrap-input">
+              <input
+                className={email !== "" ? "has-val input" : "input"}
+                type="email"
+                name=""
+                id=""
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <span className="focus-input" data-placeholder="Email"></span>
+            </div>
+
+            <div className="wrap-input">
+              <input
+                className={email !== "" ? "has-val input" : "input"}
+                type="password"
+                name=""
+                id=""
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <span className="focus-input" data-placeholder="Password"></span>
+            </div>
+
+            <div className="container-login-form-btn">
+              <button className="login-form-btn">Sig In</button>
+            </div>
+
+            <div className="text-center">
+              <span className="txt1">No contains account?</span>
+
+              <a href="#" className="txt2">
+                Create account.
+              </a>
+            </div>
+          </form>
+        </div>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </div>
+  );
 }
 
-export default App
+export default App;
