@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "./styles/styles.css";
-import DiamondPNG from "./assets/diamond.png";
+import DiamondPNG from "../assets/diamond.png";
 
 function App() {
   const [email, setEmail] = useState("");
