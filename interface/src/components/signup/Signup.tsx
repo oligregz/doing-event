@@ -3,7 +3,7 @@ import "../../styles/styles.css";
 import DiamondPNG from "../../../assets/diamond.png";
 import { AxiosResponse } from "axios";
 import signupService from "./signup.service";
-import Dialog from "../dialog/Dialog"; // Importando o componente Dialog
+import Dialog from "../dialog/Dialog";
 
 export function Signup() {
   const [name, setName] = useState("");
@@ -19,11 +19,13 @@ export function Signup() {
     null
   );
   const [signupData, setSignupData] = useState({});
-  const [dialogOpen, setDialogOpen] = useState(false); // Estado para controlar a visibilidade do Dialog
-  const [errorMessage, setErrorMessage] = useState(""); // Estado para armazenar a mensagem de erro
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [showCloseButton, setShowCloseButton] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    console.log(signupData);
+    console.log();
   }, [signupData, signupResponse]);
 
   const registerUser = async () => {
@@ -42,8 +44,9 @@ export function Signup() {
       const signupedUser = await signupService(data);
 
       if (!signupedUser.id) {
-        setErrorMessage(signupedUser); // Define a mensagem de erro
-        setDialogOpen(true); // Abre o Dialog
+        setErrorMessage(signupedUser);
+        setDialogOpen(true);
+        setShowCloseButton(true);
         console.error("Signup service returned undefined.");
         return;
       }
@@ -56,6 +59,9 @@ export function Signup() {
       localStorage.setItem("password", password);
     } catch (error) {
       console.error(error);
+      setErrorMessage("An error occurred. Please try again later.");
+      setDialogOpen(true);
+      setShowCloseButton(true);
     }
   };
 
@@ -71,9 +77,13 @@ export function Signup() {
 
     // create user and set your login variables in localstorage
     try {
+      setIsLoading(true);
+      setShowCloseButton(false);
       await registerUser();
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -190,8 +200,16 @@ export function Signup() {
         </form>
       </div>
 
-      <Dialog isOpen={dialogOpen} onClose={() => setDialogOpen(false)}>
+      <Dialog
+        isOpen={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        showCloseButton={showCloseButton}
+      >
         <p>{errorMessage}</p>
+      </Dialog>
+
+      <Dialog isOpen={isLoading} onClose={() => {}} showCloseButton={false}>
+        <p>Loading...</p>
       </Dialog>
     </div>
   );
