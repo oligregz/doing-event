@@ -1,15 +1,40 @@
-import { useState } from "react";
-import "../styles/styles.css";
-import DiamondPNG from "../../assets/diamond.png";
+import { useState, useEffect } from "react";
+import "../../styles/styles.css";
+import DiamondPNG from "../../../assets/diamond.png";
+import siginService from "./signin.service";
+import { AxiosResponse } from "axios";
 
 export function Signin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [signinResponse, setSigninResponse] = useState<AxiosResponse | null>(
+    null
+  );
+  const [signinData, setSigninData] = useState({});
+
+  useEffect(() => {
+    console.log(signinData);
+  }, [signinData]);
+
+  const handleSignin = async () => {
+    const data = {
+      email,
+      password,
+    };
+    setSigninData(data);
+    const signinRes = await siginService(data);
+
+    if (signinRes) {
+      setSigninResponse(signinRes);
+      console.log(signinResponse);
+    }
+    console.log(signinResponse);
+  };
 
   return (
     <div className="container-login">
       <div className="wrap-login">
-        <form className="login-form">
+        <form onSubmit={handleSignin} className="login-form">
           <span className="login-form-title">Welcome</span>
 
           <span className="login-form-title">
@@ -41,7 +66,9 @@ export function Signin() {
           </div>
 
           <div className="container-login-form-btn">
-            <button className="login-form-btn">Sig In</button>
+            <button type="submit" className="login-form-btn">
+              Sign In
+            </button>
           </div>
 
           <div className="text-center">
