@@ -52,8 +52,7 @@ export function Signup() {
       }
 
       setSignupResponse(signupedUser);
-      console.log("signupedUser - ", signupedUser);
-      console.log("signupResponse - ", signupResponse);
+
       // set email and pasword in localstorage
       localStorage.setItem("email", email);
       localStorage.setItem("password", password);
