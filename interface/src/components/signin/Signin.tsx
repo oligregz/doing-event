@@ -17,18 +17,22 @@ export function Signin() {
   }, [signinData]);
 
   const handleSignin = async () => {
-    const data = {
-      email,
-      password,
-    };
-    setSigninData(data);
-    const signinRes = await signinService(data);
+    try {
+      const data = {
+        email,
+        password,
+      };
+      setSigninData(data);
+      const signinRes = await signinService(data);
 
-    if (signinRes) {
-      setSigninResponse(signinRes);
+      if (signinRes) {
+        setSigninResponse(signinRes);
+        console.log(signinResponse);
+      }
       console.log(signinResponse);
+    } catch (error) {
+      console.error(error);
     }
-    console.log(signinResponse);
   };
 
   return (
