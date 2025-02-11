@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import "../../styles/styles.css";
 import DiamondPNG from "../../../assets/diamond.png";
-import siginService from "./signin.service";
 import { AxiosResponse } from "axios";
+import signinService from "./signin.service";
 
 export function Signin() {
   const [email, setEmail] = useState("");
@@ -22,7 +22,7 @@ export function Signin() {
       password,
     };
     setSigninData(data);
-    const signinRes = await siginService(data);
+    const signinRes = await signinService(data);
 
     if (signinRes) {
       setSigninResponse(signinRes);

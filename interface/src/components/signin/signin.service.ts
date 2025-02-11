@@ -1,6 +1,6 @@
 import { apiProvider } from "../../services/api.provider";
 
-const siginService = async (data: unknown) => {
+const signinService = async (data: unknown) => {
   try {
     const path = `auth/login`
     const signinUserToken = await apiProvider.post(path, data)
@@ -12,4 +12,4 @@ const siginService = async (data: unknown) => {
   }
 }
 
-export default siginService;
+export default signinService;
