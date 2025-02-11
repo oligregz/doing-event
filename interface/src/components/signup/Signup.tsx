@@ -1,6 +1,8 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import "../../styles/styles.css";
 import DiamondPNG from "../../../assets/diamond.png";
+import { AxiosResponse } from "axios";
+import signupService from "./signup.service";
 
 export function Signup() {
   const [name, setName] = useState("");
@@ -12,8 +14,49 @@ export function Signup() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [signupResponse, setSignupResponse] = useState<AxiosResponse | null>(
+    null
+  );
+  const [signupData, setSignupData] = useState({});
 
-  const handleSignup = (e: FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    console.log(signupData);
+  }, [signupData]);
+
+  const registerUser = async () => {
+    try {
+      const data = {
+        name,
+        email,
+        cpf,
+        rg,
+        cnpj,
+        dateOfBirth,
+        confirmPassword,
+      };
+
+      setSignupData(data);
+      const signupedUser = await signupService(data);
+
+      if (!signupedUser) {
+        alert("Error registering user");
+        console.error("Signup service returned undefined.");
+        return;
+      }
+
+      setSignupResponse(signupedUser);
+      console.log("signupedUser - ", signupedUser);
+      console.log("signupResponse - ", signupResponse);
+      // set email and pasword in localstorage
+      localStorage.setItem("email", email);
+      localStorage.setItem("password", password);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleSignup = async (e: FormEvent<HTMLFormElement>) => {
+    // checks password integrity
     e.preventDefault();
     if (password !== confirmPassword) {
       setPasswordError("Passwords do not match");
@@ -21,6 +64,13 @@ export function Signup() {
       return;
     }
     setPasswordError("");
+
+    // create user and set your login variables in localstorage
+    try {
+      await registerUser();
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
