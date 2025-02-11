@@ -4,14 +4,14 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.751);
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 .dialog {
-  background-color: rgba(255, 0, 0, 0.201);
+  background-color: rgba(44, 0, 74, 0.553);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -29,7 +29,7 @@
 }
 
 .dialog-close-btn {
-  background-color: #b50000c0;
+  background-color: #3b003ec0;
   color: white;
   border: none;
   padding: 10px 20px;
