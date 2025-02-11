@@ -3,6 +3,7 @@ import "../../styles/styles.css";
 import DiamondPNG from "../../../assets/diamond.png";
 import { AxiosResponse } from "axios";
 import signupService from "./signup.service";
+import Dialog from "../dialog/Dialog"; // Importando o componente Dialog
 
 export function Signup() {
   const [name, setName] = useState("");
@@ -18,10 +19,12 @@ export function Signup() {
     null
   );
   const [signupData, setSignupData] = useState({});
+  const [dialogOpen, setDialogOpen] = useState(false); // Estado para controlar a visibilidade do Dialog
+  const [errorMessage, setErrorMessage] = useState(""); // Estado para armazenar a mensagem de erro
 
   useEffect(() => {
     console.log(signupData);
-  }, [signupData]);
+  }, [signupData, signupResponse]);
 
   const registerUser = async () => {
     try {
@@ -32,14 +35,15 @@ export function Signup() {
         rg,
         cnpj,
         dateOfBirth,
-        confirmPassword,
+        password: confirmPassword,
       };
 
       setSignupData(data);
       const signupedUser = await signupService(data);
 
-      if (!signupedUser) {
-        alert("Error registering user");
+      if (!signupedUser.id) {
+        setErrorMessage(signupedUser); // Define a mensagem de erro
+        setDialogOpen(true); // Abre o Dialog
         console.error("Signup service returned undefined.");
         return;
       }
@@ -173,7 +177,7 @@ export function Signup() {
 
           <div className="container-login-form-btn">
             <button className="login-form-btn" type="submit">
-              Sign In
+              Sign Up
             </button>
           </div>
 
@@ -185,6 +189,10 @@ export function Signup() {
           </div>
         </form>
       </div>
+
+      <Dialog isOpen={dialogOpen} onClose={() => setDialogOpen(false)}>
+        <p>{errorMessage}</p>
+      </Dialog>
     </div>
   );
 }

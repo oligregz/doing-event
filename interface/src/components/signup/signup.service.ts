@@ -1,14 +1,20 @@
+import { isAxiosError } from "axios";
 import { apiProvider } from "../../services/api.provider";
 
 const signupService = async (data: unknown) => {
   try {
-    const path = `users/create`
+    const path = `users`
     const signupedUser = await apiProvider.post(path, data)
-    
-    return signupedUser;
+    console.log(signupedUser)
+
+    return signupedUser.data;
 
   } catch (error) {
-    console.error(error)
+    console.error(error);
+
+    if (isAxiosError(error)) {
+      return error.response?.data?.message || "Error when trying to register user";
+    }
   }
 }
 
