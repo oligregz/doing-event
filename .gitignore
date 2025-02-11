@@ -1,10 +1,13 @@
 node_modules
 package-lock.json
+.env
+
 api/node_modules
 api/dist
 api/package-lock.json
 api/.env
+
 interface/node_modules
 interface/dist
 interface/package-lock.json
-.env
+interface/.env
