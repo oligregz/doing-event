@@ -21,6 +21,7 @@ export function Signin() {
 
     setIsLoading(true);
     setShowCloseButton(false);
+    localStorage.clear();
 
     try {
       const storageName = localStorage.getItem("name");
@@ -36,7 +37,9 @@ export function Signin() {
         });
 
         if (!signinRes.token) {
-          setErrorMessage(signinRes);
+          setErrorMessage(
+            signinRes.message || "Login failed. Please check your credentials."
+          );
           setIsDialogOpen(true);
           return;
         }
