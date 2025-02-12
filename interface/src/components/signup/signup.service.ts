@@ -5,7 +5,6 @@ const signupService = async (data: unknown) => {
   try {
     const path = `users`
     const signupedUser = await apiProvider.post(path, data)
-    console.log(signupedUser)
 
     return signupedUser.data;
 
