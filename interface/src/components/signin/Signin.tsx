@@ -1,20 +1,20 @@
 import { useState } from "react";
 import "../../styles/styles.css";
 import DiamondPNG from "../../../assets/diamond.png";
-import { AxiosResponse } from "axios";
 import signinService from "./signin.service";
 import Dialog from "../dialog/Dialog";
+import { useNavigate } from "react-router-dom";
 
 export function Signin() {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [signinResponse, setSigninResponse] = useState<AxiosResponse | null>(
-    null
-  );
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showCloseButton, setShowCloseButton] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleSignin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,20 +23,47 @@ export function Signin() {
     setShowCloseButton(false);
 
     try {
-      const data = {
-        username: name,
-        password,
-      };
-      const signinRes = await signinService(data);
+      const storageName = localStorage.getItem("name");
+      const storagePassword = localStorage.getItem("password");
+
+      let signinRes;
+
+      // manual signin
+      if (!storageName || !storagePassword) {
+        signinRes = await signinService({
+          username: name,
+          password,
+        });
+
+        if (!signinRes.token) {
+          setErrorMessage(signinRes);
+          setIsDialogOpen(true);
+          return;
+        }
+
+        localStorage.setItem("name", name);
+        localStorage.setItem("password", password);
+        localStorage.setItem("token", signinRes.token);
+
+        navigate("/events");
+        return;
+      }
+
+      // automatic signin
+      signinRes = await signinService({
+        username: storageName,
+        password: storagePassword,
+      });
 
       if (!signinRes.token) {
         setErrorMessage(
-          signinRes || "Login failed. Please check your credentials."
+          signinRes.message || "Login failed. Please check your credentials."
         );
         setIsDialogOpen(true);
+        return;
       }
-      setSigninResponse(signinRes);
-      console.log(signinResponse);
+
+      navigate("/events");
     } catch (error) {
       console.error(error);
       setErrorMessage("An error occurred. Please try again later.");
@@ -49,6 +76,7 @@ export function Signin() {
 
   const closeDialog = () => {
     setIsDialogOpen(false);
+    navigate("/signup");
   };
 
   return (
@@ -90,7 +118,11 @@ export function Signin() {
           <div className="text-center">
             <span className="txt1">No contains account?</span>
 
-            <a href="#" className="txt2">
+            <a
+              href="/signup"
+              className="txt2"
+              onClick={() => navigate("/signup")}
+            >
               Create account.
             </a>
           </div>
