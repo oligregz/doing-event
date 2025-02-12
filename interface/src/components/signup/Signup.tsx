@@ -3,7 +3,9 @@ import "../../styles/styles.css";
 import DiamondPNG from "../../../assets/diamond.png";
 import { AxiosResponse } from "axios";
 import signupService from "./signup.service";
+import signinService from "../signin/signin.service";
 import Dialog from "../dialog/Dialog";
+import { useNavigate } from "react-router-dom";
 
 export function Signup() {
   const [name, setName] = useState("");
@@ -28,9 +30,11 @@ export function Signup() {
     console.log();
   }, [signupData, signupResponse]);
 
+  const navigate = useNavigate();
+
   const registerUser = async () => {
     try {
-      const data = {
+      const data: Record<string, string> = {
         name,
         email,
         cpf,
@@ -40,22 +44,31 @@ export function Signup() {
         password: confirmPassword,
       };
 
-      setSignupData(data);
-      const signupedUser = await signupService(data);
+      const filteredData: Record<string, string> = {};
+      for (const key in data) {
+        if (data[key] !== "") {
+          filteredData[key] = data[key];
+        }
+      }
+
+      setSignupData(filteredData);
+      const signupedUser = await signupService(filteredData);
 
       if (!signupedUser.id) {
-        setErrorMessage(signupedUser);
+        setErrorMessage(getFormattedErrorMessages(signupedUser));
         setDialogOpen(true);
         setShowCloseButton(true);
-        console.error("Signup service returned undefined.");
         return;
       }
 
       setSignupResponse(signupedUser);
 
-      // set email and pasword in localstorage
-      localStorage.setItem("email", email);
+      // savevalues in localStorage
+      localStorage.setItem("name", name);
       localStorage.setItem("password", password);
+
+      // try run auto sign in
+      await handleAutoLogin();
     } catch (error) {
       console.error(error);
       setErrorMessage("An error occurred. Please try again later.");
@@ -64,9 +77,59 @@ export function Signup() {
     }
   };
 
+  const handleAutoLogin = async () => {
+    try {
+      setIsLoading(true);
+      const storageName = localStorage.getItem("name");
+      const storagePassword = localStorage.getItem("password");
+
+      if (!storageName || !storagePassword) {
+        throw new Error("Credentials not found in localStorage");
+      }
+
+      const signinRes = await signinService({
+        username: storageName,
+        password: storagePassword,
+      });
+
+      if (!signinRes.token) {
+        setErrorMessage(
+          "Automatic login failed. Please try logging in manually."
+        );
+        setDialogOpen(true);
+        setShowCloseButton(true);
+        return;
+      }
+
+      // save token in localStorage
+      localStorage.setItem("token", signinRes.token);
+
+      // push to events page
+      navigate("/events");
+    } catch (error) {
+      console.error(error);
+      setErrorMessage(
+        "Automatic login failed. Please try logging in manually."
+      );
+      setDialogOpen(true);
+      setShowCloseButton(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getFormattedErrorMessages = (messages: string[]): string => {
+    if (Array.isArray(messages)) {
+      return messages
+        .map((message, index) => ` | Error [${index + 1}] - ${message}`)
+        .join("\n");
+    }
+    return "An unknown error occurred.";
+  };
+
   const handleSignup = async (e: FormEvent<HTMLFormElement>) => {
-    // checks password integrity
     e.preventDefault();
+    localStorage.clear();
     if (password !== confirmPassword) {
       setPasswordError("Passwords do not match");
       alert(passwordError);
@@ -74,7 +137,6 @@ export function Signup() {
     }
     setPasswordError("");
 
-    // create user and set your login variables in localstorage
     try {
       setIsLoading(true);
       setShowCloseButton(false);
@@ -191,9 +253,9 @@ export function Signup() {
           </div>
 
           <div className="text-center">
-            <span className="txt1">No account?</span>
-            <a href="#" className="txt2">
-              Create account.
+            <span className="txt1">Contains account?</span>
+            <a href="/" className="txt2" onClick={() => navigate("/")}>
+              Sign In.
             </a>
           </div>
         </form>
