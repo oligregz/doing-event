@@ -3,6 +3,9 @@ import "../../styles/styles.css";
 import DiamondPNG from "../../../assets/diamond.png";
 import { AxiosResponse } from "axios";
 import signupService from "./signup.service";
+import signinService from "../signin/signin.service";
+import Dialog from "../dialog/Dialog";
+import { useNavigate } from "react-router-dom";
 
 export function Signup() {
   const [name, setName] = useState("");
@@ -18,46 +21,115 @@ export function Signup() {
     null
   );
   const [signupData, setSignupData] = useState({});
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [showCloseButton, setShowCloseButton] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    console.log(signupData);
-  }, [signupData]);
+    console.log();
+  }, [signupData, signupResponse]);
+
+  const navigate = useNavigate();
 
   const registerUser = async () => {
     try {
-      const data = {
+      const data: Record<string, string> = {
         name,
         email,
         cpf,
         rg,
         cnpj,
         dateOfBirth,
-        confirmPassword,
+        password: confirmPassword,
       };
 
-      setSignupData(data);
-      const signupedUser = await signupService(data);
+      const filteredData: Record<string, string> = {};
+      for (const key in data) {
+        if (data[key] !== "") {
+          filteredData[key] = data[key];
+        }
+      }
 
-      if (!signupedUser) {
-        alert("Error registering user");
-        console.error("Signup service returned undefined.");
+      setSignupData(filteredData);
+      const signupedUser = await signupService(filteredData);
+
+      if (!signupedUser.id) {
+        setErrorMessage(getFormattedErrorMessages(signupedUser));
+        setDialogOpen(true);
+        setShowCloseButton(true);
         return;
       }
 
       setSignupResponse(signupedUser);
-      console.log("signupedUser - ", signupedUser);
-      console.log("signupResponse - ", signupResponse);
-      // set email and pasword in localstorage
-      localStorage.setItem("email", email);
+
+      // savevalues in localStorage
+      localStorage.setItem("name", name);
       localStorage.setItem("password", password);
+
+      // try run auto sign in
+      await handleAutoLogin();
     } catch (error) {
       console.error(error);
+      setErrorMessage("An error occurred. Please try again later.");
+      setDialogOpen(true);
+      setShowCloseButton(true);
     }
   };
 
+  const handleAutoLogin = async () => {
+    try {
+      setIsLoading(true);
+      const storageName = localStorage.getItem("name");
+      const storagePassword = localStorage.getItem("password");
+
+      if (!storageName || !storagePassword) {
+        throw new Error("Credentials not found in localStorage");
+      }
+
+      const signinRes = await signinService({
+        username: storageName,
+        password: storagePassword,
+      });
+
+      if (!signinRes.token) {
+        setErrorMessage(
+          "Automatic login failed. Please try logging in manually."
+        );
+        setDialogOpen(true);
+        setShowCloseButton(true);
+        return;
+      }
+
+      // save token in localStorage
+      localStorage.setItem("token", signinRes.token);
+
+      // push to events page
+      navigate("/events");
+    } catch (error) {
+      console.error(error);
+      setErrorMessage(
+        "Automatic login failed. Please try logging in manually."
+      );
+      setDialogOpen(true);
+      setShowCloseButton(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getFormattedErrorMessages = (messages: string[]): string => {
+    if (Array.isArray(messages)) {
+      return messages
+        .map((message, index) => ` | Error [${index + 1}] - ${message}`)
+        .join("\n");
+    }
+    return "An unknown error occurred.";
+  };
+
   const handleSignup = async (e: FormEvent<HTMLFormElement>) => {
-    // checks password integrity
     e.preventDefault();
+    localStorage.clear();
     if (password !== confirmPassword) {
       setPasswordError("Passwords do not match");
       alert(passwordError);
@@ -65,11 +137,14 @@ export function Signup() {
     }
     setPasswordError("");
 
-    // create user and set your login variables in localstorage
     try {
+      setIsLoading(true);
+      setShowCloseButton(false);
       await registerUser();
     } catch (error) {
       console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -173,18 +248,30 @@ export function Signup() {
 
           <div className="container-login-form-btn">
             <button className="login-form-btn" type="submit">
-              Sign In
+              Sign Up
             </button>
           </div>
 
           <div className="text-center">
-            <span className="txt1">No account?</span>
-            <a href="#" className="txt2">
-              Create account.
+            <span className="txt1">Contains account?</span>
+            <a href="/" className="txt2" onClick={() => navigate("/")}>
+              Sign In.
             </a>
           </div>
         </form>
       </div>
+
+      <Dialog
+        isOpen={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        showCloseButton={showCloseButton}
+      >
+        <p>{errorMessage}</p>
+      </Dialog>
+
+      <Dialog isOpen={isLoading} onClose={() => {}} showCloseButton={false}>
+        <p>Loading...</p>
+      </Dialog>
     </div>
   );
 }
