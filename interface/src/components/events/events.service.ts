@@ -47,9 +47,9 @@ export const updateEventService = async (data: unknown, authToken: string) => {
       Authorization: `Bearer ${authToken}`,
     };
 
-    const createdEvent = await apiProvider.put(path, data, { headers });
+    const updatedEvent = await apiProvider.put(path, data, { headers });
 
-    return createdEvent.data;
+    return updatedEvent.data;
 
   } catch (error) {
     console.error(error);
@@ -66,7 +66,7 @@ export const deleteEventService = async (eventId: string, authToken: string) => 
       Authorization: `Bearer ${authToken}`,
     };
 
-    const removedEvent = await apiProvider.post(`${path}/${eventId}`, { headers });
+    const removedEvent = await apiProvider.delete(`${path}/${eventId}`, { headers });
 
     return removedEvent.data;
 

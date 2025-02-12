@@ -4,6 +4,13 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./style.css";
 import Dialog from "../dialog/Dialog";
 import trashImg from "../../../assets/excluir.png";
+import {
+  createEventService,
+  deleteEventService,
+  listEventsService,
+  updateEventService,
+} from "./events.service"; // Importando o serviço
+import { useNavigate } from "react-router-dom"; // Para redirecionar o usuário
 
 type Event = {
   id: string;
@@ -22,58 +29,109 @@ const Events = () => {
   const [eventToBeEdited, setEventToBeEdited] = useState<Event | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isChanged, setIsChanged] = useState<boolean>(false);
+  const [authToken, setAuthToken] = useState<string>(""); // Estado para o token de autenticação
+  const [errorMessage, setErrorMessage] = useState<string | null>(null); // Estado para a mensagem de erro
+  const navigate = useNavigate(); // Hook para redirecionamento
+
+  // Verifica se o token existe no localStorage ao carregar o componente
+  useEffect(() => {
+    const token = localStorage.getItem("token"); // Busca o token no localStorage
+
+    if (!token) {
+      // Se o token não existir, redireciona para a tela de login
+      navigate("/");
+    } else {
+      // Se o token existir, define no estado
+      setAuthToken(token);
+    }
+  }, [navigate]);
 
   useEffect(() => {
-    const mockEvents: Event[] = [
-      {
-        id: "A1B2C3D4E5",
-        description: "Meeting with client",
-        startDate: "2025-02-15T10:00:00",
-        endDate: "2025-02-15T11:00:00",
-      },
-      {
-        id: "F6G7H8I9J0",
-        description: "Team brainstorming",
-        startDate: "2025-02-16T14:00:00",
-        endDate: "2025-02-16T16:00:00",
-      },
-      {
-        id: "K1L2M3N4O5",
-        description: "Product launch in seller week",
-        startDate: "2025-02-18T09:00:00",
-        endDate: "2025-02-18T12:00:00",
-      },
-      {
-        id: "P6Q7R8S9T0",
-        description: "Workshop",
-        startDate: "2025-02-20T13:00:00",
-        endDate: "2025-02-20T15:00:00",
-      },
-    ];
+    if (authToken) {
+      loadEvents();
+    }
+  }, [authToken]);
 
-    setTimeout(() => {
-      setEvents(mockEvents);
-    }, 1000);
-  }, []);
+  const loadEvents = async () => {
+    try {
+      const events = await listEventsService(authToken);
+      if (Array.isArray(events)) {
+        setEvents(events);
+      } else {
+        setErrorMessage("Failed to load events.");
+        setIsDialogOpen(true);
+      }
+    } catch (error) {
+      console.error("Error loading events:", error);
+      setErrorMessage("Failed to load events. Please try again.");
+      setIsDialogOpen(true);
+    }
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ startDate, endDate, description });
+
+    const eventData = {
+      description,
+      startDate: startDate?.toISOString(),
+      endDate: endDate?.toISOString(),
+    };
+
+    try {
+      const createdEvent = await createEventService(eventData, authToken);
+      console.log("Event created:", createdEvent);
+
+      // Verifica se o evento criado possui a chave 'id'
+      if (createdEvent && createdEvent.id) {
+        // Atualiza a lista de eventos com o novo evento
+        setEvents([...events, createdEvent]);
+
+        // Limpa o formulário
+        setDescription("");
+        setStartDate(new Date());
+        setEndDate(new Date());
+      } else {
+        // Se não tiver a chave 'id', exibe o diálogo com a mensagem de erro
+        setErrorMessage(JSON.stringify(createdEvent));
+        setIsDialogOpen(true);
+      }
+    } catch (error) {
+      console.error("Error creating event:", error);
+      setErrorMessage("Failed to create event. Please try again.");
+      setIsDialogOpen(true);
+    }
   };
 
   const handleDeleteClick = (event: Event, e: React.MouseEvent) => {
-    e.stopPropagation(); // Impede a propagação do evento
+    e.stopPropagation();
     setEventToBeDeleted(event);
     setIsDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (eventToBeDeleted) {
-      console.log(`Deleting event with ID: ${eventToBeDeleted.id}`);
-      // Aqui poderia ser feita a chamada para a API para deletar o evento
+      try {
+        const response = await deleteEventService(
+          eventToBeDeleted.id,
+          authToken
+        );
+
+        if (response && response.message) {
+          // Se houver uma mensagem de erro, exibe o diálogo de erro
+          setErrorMessage(response.message);
+          setIsDialogOpen(true);
+        } else {
+          // Se a exclusão for bem-sucedida, atualiza a lista de eventos
+          await loadEvents();
+          setIsDialogOpen(false);
+          setEventToBeDeleted(null);
+        }
+      } catch (error) {
+        console.error("Error deleting event:", error);
+        setErrorMessage("Failed to delete event. Please try again.");
+        setIsDialogOpen(true);
+      }
     }
-    setIsDialogOpen(false);
-    setEventToBeDeleted(null);
   };
 
   const handleEditClick = (event: Event) => {
@@ -82,32 +140,55 @@ const Events = () => {
     setEndDate(new Date(event.endDate));
     setDescription(event.description);
     setIsEditing(true);
-    setIsChanged(false); // Reseta a mudança ao entrar em modo de edição
+    setIsChanged(false);
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (eventToBeEdited) {
-      const updatedEvent = {
-        ...eventToBeEdited,
+      const updatedEventData = {
+        id: eventToBeEdited.id,
+        description,
         startDate: startDate?.toISOString() || eventToBeEdited.startDate,
         endDate: endDate?.toISOString() || eventToBeEdited.endDate,
-        description: description,
       };
 
-      const updatedEvents = events.map((event) =>
-        event.id === updatedEvent.id ? updatedEvent : event
-      );
+      try {
+        // Chama a função de atualização do serviço
+        const updatedEvent = await updateEventService(
+          updatedEventData,
+          authToken
+        );
 
-      setEvents(updatedEvents);
-      setIsEditing(false);
-      setEventToBeEdited(null);
-      setIsChanged(false); // Resetar o estado de mudança após a atualização
-      console.log(`Updating event with ID: ${updatedEvent.id}`);
-      // Aqui poderia ser feita a chamada para a API para atualizar o evento
+        // Verifica se a atualização foi bem-sucedida
+        if (updatedEvent && updatedEvent.id) {
+          // Atualiza a lista de eventos com o novo evento
+          const updatedEvents = events.map((event) =>
+            event.id === updatedEvent.id ? updatedEvent : event
+          );
+          setEvents(updatedEvents);
+
+          // Exibe o diálogo com os novos dados do evento
+          setErrorMessage(null);
+          setIsDialogOpen(true);
+          console.log("Event updated successfully:", updatedEvent);
+        } else {
+          // Se a atualização falhar, exibe a mensagem de erro
+          setErrorMessage(updatedEvent || "Failed to update event.");
+          setIsDialogOpen(true);
+        }
+      } catch (error) {
+        console.error("Error updating event:", error);
+        setErrorMessage("Failed to update event. Please try again.");
+        setIsDialogOpen(true);
+      } finally {
+        // Fecha o modo de edição
+        setIsEditing(false);
+        setEventToBeEdited(null);
+        setIsChanged(false);
+      }
     }
   };
 
-  // Funções para atualizar campos e verificar se houve mudanças
   const handleStartDateChange = (date: Date | null) => {
     setStartDate(date);
     setIsChanged(true);
@@ -137,7 +218,7 @@ const Events = () => {
           <label className="font-medium">Start Date & Time:</label>
           <DatePicker
             selected={startDate}
-            onChange={handleStartDateChange} // Usando a função para alterar e verificar mudanças
+            onChange={handleStartDateChange}
             showTimeSelect
             dateFormat="Pp"
             className="border p-2 rounded-md"
@@ -148,7 +229,7 @@ const Events = () => {
           <label className="font-medium">End Date & Time:</label>
           <DatePicker
             selected={endDate}
-            onChange={handleEndDateChange} // Usando a função para alterar e verificar mudanças
+            onChange={handleEndDateChange}
             showTimeSelect
             dateFormat="Pp"
             className="border p-2 rounded-md"
@@ -161,7 +242,7 @@ const Events = () => {
             type="text"
             placeholder="Description"
             value={description}
-            onChange={handleDescriptionChange} // Usando a função para alterar e verificar mudanças
+            onChange={handleDescriptionChange}
             className="border p-2 rounded-md"
           />
         </div>
@@ -212,7 +293,7 @@ const Events = () => {
               <td className="border border-gray-300 p-2">
                 <button
                   id="trash-button"
-                  onClick={(e) => handleDeleteClick(event, e)} // Passa o evento de clique
+                  onClick={(e) => handleDeleteClick(event, e)}
                   className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition"
                 >
                   <img className="trash-png" src={trashImg} alt="" />
@@ -223,23 +304,44 @@ const Events = () => {
         </tbody>
       </table>
 
-      {/* Diálogo de confirmação */}
       <Dialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         showCloseButton={true}
       >
-        <p className="text-lg font-medium">
-          Event with cod. <strong>{eventToBeDeleted?.id.slice(0, 2)}</strong>
-        </p>
-        <button
-          onClick={confirmDelete}
-          className="mt-4 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
-        >
-          Delete
-        </button>
+        {eventToBeDeleted ? (
+          <>
+            <p className="text-lg font-medium">
+              Event with cod.{" "}
+              <strong>{eventToBeDeleted?.id.slice(0, 2)}</strong>
+            </p>
+            <button
+              onClick={confirmDelete}
+              className="mt-4 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
+            >
+              Delete
+            </button>
+          </>
+        ) : errorMessage ? (
+          <>
+            <p className="text-lg font-medium">Error:</p>
+            <p className="text-sm">{errorMessage}</p>
+          </>
+        ) : (
+          <>
+            <p className="text-lg font-medium">Event Updated Successfully!</p>
+            <p className="text-sm">
+              <strong>Description:</strong> {description}
+            </p>
+            <p className="text-sm">
+              <strong>Start Date:</strong> {startDate?.toLocaleString()}
+            </p>
+            <p className="text-sm">
+              <strong>End Date:</strong> {endDate?.toLocaleString()}
+            </p>
+          </>
+        )}
       </Dialog>
-
       {/* Diálogo de edição */}
       {isEditing && (
         <Dialog
@@ -248,15 +350,15 @@ const Events = () => {
           showCloseButton={true}
         >
           <p className="text-lg font-medium">
-            Editing Event with cod.{" "}
-            <strong>{eventToBeEdited?.id.slice(0, 2)}</strong>
+            Editing Event with id: <br />
+            <strong>{eventToBeEdited?.id}</strong>
           </p>
           <div className="flex flex-col gap-4">
             <div className="flex flex-col">
               <label className="font-medium">Start Date & Time:</label>
               <DatePicker
                 selected={startDate}
-                onChange={handleStartDateChange} // Atualizando para verificar alterações
+                onChange={handleStartDateChange}
                 showTimeSelect
                 dateFormat="Pp"
                 className="border p-2 rounded-md"
@@ -267,7 +369,7 @@ const Events = () => {
               <label className="font-medium">End Date & Time:</label>
               <DatePicker
                 selected={endDate}
-                onChange={handleEndDateChange} // Atualizando para verificar alterações
+                onChange={handleEndDateChange}
                 showTimeSelect
                 dateFormat="Pp"
                 className="border p-2 rounded-md"
@@ -280,7 +382,7 @@ const Events = () => {
                 type="text"
                 placeholder="Description"
                 value={description}
-                onChange={handleDescriptionChange} // Atualizando para verificar alterações
+                onChange={handleDescriptionChange}
                 className="border p-2 rounded-md"
               />
             </div>
@@ -290,7 +392,7 @@ const Events = () => {
               className={`mt-4 ${
                 isChanged ? "bg-green-500" : "bg-gray-500"
               } text-white px-4 py-2 rounded-md hover:bg-green-600 transition`}
-              disabled={!isChanged} // Desabilita o botão se não houver mudanças
+              disabled={!isChanged}
             >
               Update Event
             </button>
