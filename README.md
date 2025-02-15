@@ -94,18 +94,18 @@ docker-compose up --build -d
 
 start api service:
 ```bash
-cd api/ && nmp run start
+cd api/ && npm run start
 ```
 
 start interface service:
 ```bash
-cd .. && cd interface/ && nmp run dev
+cd .. && cd interface/ && npm run dev
 ```
 
 
 ## 👀 Interface Route <br />
 
-> __Use app on port 80__
+> __Use app on port 3000__
 
 __>__ http://localhost:5173/
 
