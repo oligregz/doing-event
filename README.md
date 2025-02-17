@@ -87,21 +87,26 @@ Install the project's dependencies in the application's parent directory with th
 ```bash
 npm install
 ```
+
 init database with docker-compose:
 ```bash
 docker-compose up --build -d
 ```
 
+up migrations to database:
+```bash
+cd api/ && npm run migration:run
+```
+
 start api service:
 ```bash
-cd api/ && npm run start
+nmp run start
 ```
 
 start interface service:
 ```bash
 cd .. && cd interface/ && npm run dev
 ```
-
 
 ## 👀 Interface Route <br />
 
